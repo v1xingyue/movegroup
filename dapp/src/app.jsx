@@ -3,10 +3,12 @@ import BigNumber from "bignumber.js";
 import classnames from "classnames";
 import { providers } from "@starcoin/starcoin";
 import StarMaskOnboarding from "@starcoin/starmask-onboarding";
-import { Account, Mask, makeModal, Counter, IncreaseCounterBy } from "./modal";
+import { InitGroup, Mask, makeModal, AddMember } from "./modal";
 import "./style.css";
 import { getResource } from "./txs/counter.tx";
-import { COUNTER_RESOURCE_ID } from "./txs/config";
+import { GROUP_ADDRESS, GROUP_RESOURCE_ID } from "./txs/config";
+import { utils, bcs } from "@starcoin/starcoin";
+import { arrayify, hexlify } from "@ethersproject/bytes";
 
 export let starcoinProvider;
 
@@ -17,10 +19,7 @@ const forwarderOrigin =
     : undefined;
 
 const { isStarMaskInstalled } = StarMaskOnboarding;
-
 const onboarding = new StarMaskOnboarding({ forwarderOrigin });
-
-
 const BIG_NUMBER_NANO_STC_MULTIPLIER = new BigNumber("1000000000");
 
 const gas = {
@@ -28,21 +27,19 @@ const gas = {
   gasPrice: 1,
 };
 
-
 export const App = () => {
+
   // Send STC默认信息
   const [defaultToAddr, setAddr] = useState(
-    "0x1168e88ffc5cec53b398b42d61885bbb"
+    "0x6c03f22fcafe4382333898b8bebf0ab7"
   );
-  // Send STC默认信息
   const [defaultAmount, setAmount] = useState("0.001");
-  // Send STC默认信息
+  const [activeAccount, setActiveAccount] = useState("");
   const [defaultExpired, setExpired] = useState("1800");
+
   // Send STC 被拒绝
   const [trasError, setTrasError] = useState(false);
-
   const [transactionHash, setTrans] = useState("");
-
   const [transTimer, setTimer] = useState(null);
 
   // 鼠标是否hover了connect按钮
@@ -51,11 +48,7 @@ export const App = () => {
   const [isStarMaskConnected, setConnected] = useState(false);
   // 已连接账户
   const [account, setAccount] = useState([]);
-  const [activeAccount, setActiveAccount] = useState("");
-
   const [isInstall, setInstall] = useState(true);
-
-  const [counter, setCounter] = useState(0);
 
   const freshConnected = useCallback(async () => {
     const newAccounts = await window.starcoin.request({
@@ -65,15 +58,6 @@ export const App = () => {
     setConnected(newAccounts && newAccounts.length > 0);
     setActiveAccount(newAccounts.length > 0 ? newAccounts[0] : "");
   }, []);
-
-  const listenMessage = useCallback(() => {
-    window.addEventListener('message', (e) => {
-      if (e.data.data && e.data.data.data && e.data.data.data.method == "starmask_chainChanged") {
-        console.log("starmask_chainChanged")
-        freshConnected()
-      }
-    })
-  }, [])
 
   useEffect(() => {
     if (!isStarMaskInstalled()) {
@@ -96,6 +80,16 @@ export const App = () => {
     }
   }, []);
 
+  const bytesLikeToMsg = (hexmessge) => {
+    try {
+      let ubytes = arrayify(hexmessge);
+      let d = new bcs.BcsDeserializer(ubytes);
+      return d.deserializeStr();
+    } catch (error) {
+      return hexmessge;
+    }
+  }
+
   const handleClick = useCallback(() => {
     if (isStarMaskConnected) {
       if (onboarding) {
@@ -104,7 +98,6 @@ export const App = () => {
     } else {
       freshConnected();
     }
-    listenMessage()
   }, [freshConnected, isStarMaskConnected]);
 
   const handleSendSTC = useCallback(async () => {
@@ -114,7 +107,6 @@ export const App = () => {
       BIG_NUMBER_NANO_STC_MULTIPLIER
     );
     const sendAmountHex = `0x${sendAmountNanoSTC.toString(16)}`;
-
     const txParams = {
       to: defaultToAddr,
       value: sendAmountHex,
@@ -142,9 +134,16 @@ export const App = () => {
     }
   }, [defaultToAddr, defaultExpired, defaultAmount]);
 
-  const getCounter = async () => {
-    let res = await getResource(activeAccount, COUNTER_RESOURCE_ID)
-    setCounter(res.value)
+  const getGroup = async () => {
+    console.log(activeAccount);
+    let res = await getResource(activeAccount, GROUP_RESOURCE_ID);
+    let result = res.members.map((book) => {
+      console.log(typeof (book.name));
+      book.name = bytesLikeToMsg(book.name);
+      book.link = bytesLikeToMsg(book.link);
+      return book;
+    });
+    alert(JSON.stringify(result));
   }
   return (
     <div className="tracking-widest">
@@ -272,37 +271,20 @@ export const App = () => {
                           return (
                             <>
                               <Mask onClose={onClose} />
-                              <Account />
+                              <InitGroup />
                             </>
                           );
                         },
                       });
                     }}
                   >
-                    Init_counter
+                    init_your_own_group
                   </div>
                   <div
                     className="mt-4 rounded-2xl bg-blue-900 flex justify-center text-white p-4 font-bold cursor-pointer hover:bg-blue-700 duration-300"
-                    onClick={() => getCounter()}
+                    onClick={() => getGroup()}
                   >
-                    Get Counter:{counter}
-                  </div>
-                  <div
-                    className="mt-4 rounded-2xl bg-blue-900 flex justify-center text-white p-4 font-bold cursor-pointer hover:bg-blue-700 duration-300"
-                    onClick={() => {
-                      makeModal({
-                        children: ({ onClose }) => {
-                          return (
-                            <>
-                              <Mask onClose={onClose} />
-                              <Counter />
-                            </>
-                          );
-                        },
-                      });
-                    }}
-                  >
-                    Incr_counter
+                    Get GroupMembers (Read Resource)
                   </div>
                   <div
                     className="mt-4 rounded-2xl bg-blue-900 flex justify-center text-white p-4 font-bold cursor-pointer hover:bg-blue-700 duration-300"
@@ -312,14 +294,14 @@ export const App = () => {
                           return (
                             <>
                               <Mask onClose={onClose} />
-                              <IncreaseCounterBy />
+                              <AddMember />
                             </>
                           );
                         },
                       });
                     }}
                   >
-                    Incr_counter_by
+                    add group member
                   </div>
                 </div>
               </div>

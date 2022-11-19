@@ -6,10 +6,10 @@ import { createRoot } from "react-dom/client";
 import { useCallback } from "react";
 import { arrayify, hexlify } from "@ethersproject/bytes";
 import { utils, bcs } from "@starcoin/starcoin";
+import encoding from '@starcoin/starcoin';
 import { starcoinProvider } from "./app";
-import { executeFunction } from "./txs/counter.tx";
-import { COUNTER_ADDRESS, INCR_COUNTER_FUNC_NAMW, INCR_COUNTERBY_FUNC_NAME } from "./txs/config";
-
+import { executeFunction, executeFunction2 } from "./txs/counter.tx";
+import { GROUP_ADDRESS, INIT_GROUP_FUNC_NAME, S_ADD_MEMBER_FUNC_NAME } from "./txs/config";
 
 export const makeModal = (props) => {
   const { children } = props;
@@ -55,11 +55,11 @@ export const Mask = (props) => {
   );
 };
 
-export const Account = (props) => {
-  const { initAccount, initAmount, initExpired } = props;
+export const InitGroup = (props) => {
+  const { initAmount, initExpired } = props;
   const { isShow } = useFadeIn();
   const [account, setAccount] = useState(
-    initAccount || "0x1168e88ffc5cec53b398b42d61885bbb"
+    GROUP_ADDRESS || "0x1168e88ffc5cec53b398b42d61885bbb"
   );
   const [amount, setAmount] = useState(initAmount || "0.001");
   const [expired, setExpired] = useState(initExpired || "1800");
@@ -67,7 +67,8 @@ export const Account = (props) => {
 
   const handleCall = useCallback(async () => {
     try {
-      const functionId = `${COUNTER_ADDRESS}::MyCounter::init_counter`;
+      const functionId = `${GROUP_ADDRESS}::${INIT_GROUP_FUNC_NAME}`;
+      console.log(functionId);
       const strTypeArgs = [];
       const tyArgs = utils.tx.encodeStructTypeTags(strTypeArgs);
       const args = [];
@@ -110,44 +111,12 @@ export const Account = (props) => {
         isShow ? "opacity-100 scale-100" : "opacity-0 scale-50"
       )}
     >
-      <div className="font-bold">To</div>
-      <div className="mt-2 mb-2">
-        <input
-          type="text"
-          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
-          value={account}
-          onChange={(e) => {
-            setAccount(e.target.value);
-          }}
-        />
-      </div>
-      <div className="font-bold">Amount of STC</div>
-      <div className="mt-2 mb-2">
-        <input
-          type="text"
-          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
-          value={amount}
-          onChange={(e) => {
-            setAmount(e.target.value);
-          }}
-        />
-      </div>
-      <div className="font-bold">Expired</div>
-      <div className="mt-2 mb-2">
-        <input
-          type="text"
-          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
-          value={expired}
-          onChange={(e) => {
-            setExpired(e.target.value);
-          }}
-        />
-      </div>
+      <div className="font-bold">Init your own group</div>
       <div
         className="mt-6 p-4 flex justify-center font-bold bg-blue-900 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
         onClick={handleCall}
       >
-        CALL
+        Create Your Own Group
       </div>
       {hash && (
         <div className="text-center mt-2 text-gray-500 break-all">
@@ -158,53 +127,22 @@ export const Account = (props) => {
   );
 };
 
-export const Counter = (props) => {
-  const [hash, setHash] = useState('')
-  const [txStatus, setTxStatus] = useState()
-  useEffect(() => {
-    const incr_counter = async () => {
-      let txHash = await executeFunction(COUNTER_ADDRESS, INCR_COUNTER_FUNC_NAMW)
-      setHash(txHash)
-      let timer = setInterval(async () => {
-        const txnInfo = await starcoinProvider.getTransactionInfo(txHash);
-        setTxStatus(txnInfo.status)
-        if (txnInfo.status === "Executed") {
-          clearInterval(timer);
-        }
-      }, 500);
-    }
-    incr_counter()
-
-  }, [])
-
-  const { isShow } = useFadeIn();
-  return <div className={classnames(
-    "fixed top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 rounded-2xl shadow-2xl w-3/4 p-6 bg-white duration-300",
-    isShow ? "opacity-100 scale-100" : "opacity-0 scale-50"
-  )}>
-    {hash && (
-      <div className="text-center mt-2 text-gray-500 break-all">
-        Transaction Hash: {hash}
-      </div>
-
-    )}
-    {txStatus ? <div style={{ "textAlign": "Center" }}>{txStatus}</div> : null}
-  </div>
-}
-
-
-export const IncreaseCounterBy = (props) => {
-  const [plus, setPlus] = useState(2)
+// TODO: Finish AddMember
+export const AddMember = () => {
+  // const utf8Encode = new TextEncoder();
+  const [name, setName] = useState("")
+  const [link, setLink] = useState("")
   const [txHash, setTxHash] = useState()
   const [disabled, setDisabled] = useState(false)
   const [txStatus, setTxStatus] = useState()
   const handleCall = () => {
     setDisabled(true)
     setTxStatus("Pending...")
-    const incr_counter_by = async () => {
+    const add_member = async () => {
       const tyArgs = []
-      const args = [parseInt(plus)]
-      let txHash = await executeFunction(COUNTER_ADDRESS, INCR_COUNTERBY_FUNC_NAME, tyArgs, args)
+      console.log(name, link);
+      const args = [name, link]
+      let txHash = await executeFunction2(GROUP_ADDRESS, S_ADD_MEMBER_FUNC_NAME, tyArgs, args)
       setTxHash(txHash)
       let timer = setInterval(async () => {
         const txnInfo = await starcoinProvider.getTransactionInfo(txHash);
@@ -215,8 +153,7 @@ export const IncreaseCounterBy = (props) => {
         }
       }, 500);
     }
-    incr_counter_by()
-
+    add_member()
   }
   const { isShow } = useFadeIn();
 
@@ -227,13 +164,23 @@ export const IncreaseCounterBy = (props) => {
         isShow ? "opacity-100 scale-100" : "opacity-0 scale-50"
       )}
     >
-      <div className="font-bold">To</div>
+      <div className="font-bold">Add Member</div>
       <div className="mt-2 mb-2">
         <input
           type="text"
           className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
-          value={plus}
-          onChange={(e) => setPlus(e.target.value)}
+          value={name}
+          placeholder="Name"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div className="mt-2 mb-2">
+        <input
+          type="text"
+          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
+          placeholder="Link"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
         />
       </div>
       <div

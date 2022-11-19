@@ -40,16 +40,16 @@ module MyCounterAddr::MoveGroup {
         Self::create_group(&account)
     }
 
-//    public(script) fun s_add_book(account: signer, name:vector<u8>, link: vector<u8>) acquires  Library {
-//       Self::addBook(&account,name, link)
-//    }
+    public(script) fun s_add_member(account: signer, name:vector<u8>, link: vector<u8>) acquires MoveGroup {
+        Self::addMember(&account,name, link)
+    }
 
-//    public(script) fun s_update_book_at_id(account: signer, id:u64,name:vector<u8>, link: vector<u8>) acquires  Library {
-//       Self::updateBookAtId(&account,id,name,link)
-//    }
+    public(script) fun s_update_member_at_id(account: signer, id:u64,name:vector<u8>, link: vector<u8>) acquires  MoveGroup {
+        Self::updateMemberAtId(&account,id,name,link)
+    }
 
-//    public(script) fun s_delete_book_at_id(account: signer, id:u64) acquires  Library {
-//       Self::deleteBookAtId(&account,id)
-//    }
+    public(script) fun s_delete_member_at_id(account: signer, id:u64) acquires MoveGroup {
+        Self::deleteMemberAtId(&account,id)
+    }
 
 }
