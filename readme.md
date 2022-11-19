@@ -2,7 +2,10 @@
 
 简单的智能合约档案管理。
 
-项目运行地址: <https://movegroup-v1xingyue.vercel.app/>
+基于 library 合约修改，完成。
+
+项目运行地址: <https://movegroup.vercel.app/>
+运行网络: barnard.seed.starcoin
 
 实现突出点:
 
