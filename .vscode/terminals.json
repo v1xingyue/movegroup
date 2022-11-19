@@ -1,0 +1,34 @@
+{
+    "autorun": true,
+    "terminals": [
+        {
+            "name": "starcoin node",
+            "description": "start starcoin node ",
+            "open": true,
+            "focus": false,
+            "commands": [
+                "source env.sh",
+                "starcoin -n dev"
+            ]
+        },
+        {
+            "name": "starcoin dapp",
+            "description": "start dapp dev",
+            "cwd": "dapp",
+            "open": true,
+            "focus": false,
+            "commands": [
+                "yarn start"
+            ]
+        },
+        {
+            "name": "contract command",
+            "description": "contract",
+            "open": true,
+            "focus": true,
+            "commands": [
+                "source env.sh"
+            ]
+        }
+    ]
+}
