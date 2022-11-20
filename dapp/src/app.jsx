@@ -3,10 +3,10 @@ import BigNumber from "bignumber.js";
 import classnames from "classnames";
 import { providers } from "@starcoin/starcoin";
 import StarMaskOnboarding from "@starcoin/starmask-onboarding";
-import { InitGroup, Mask, makeModal, AddMember } from "./modal";
+import { InitGroup, Mask, makeModal, AddMember, RemoveMember } from "./modal";
 import "./style.css";
 import { getResource } from "./txs/counter.tx";
-import { GROUP_ADDRESS, GROUP_RESOURCE_ID } from "./txs/config";
+import { GROUP_RESOURCE_ID } from "./txs/config";
 import { utils, bcs } from "@starcoin/starcoin";
 import { arrayify, hexlify } from "@ethersproject/bytes";
 
@@ -303,6 +303,25 @@ export const App = () => {
                   >
                     add group member
                   </div>
+
+                  <div
+                    className="mt-4 rounded-2xl bg-blue-900 flex justify-center text-white p-4 font-bold cursor-pointer hover:bg-blue-700 duration-300"
+                    onClick={() => {
+                      makeModal({
+                        children: ({ onClose }) => {
+                          return (
+                            <>
+                              <Mask onClose={onClose} />
+                              <RemoveMember />
+                            </>
+                          );
+                        },
+                      });
+                    }}
+                  >
+                    remove group member
+                  </div>
+
                 </div>
               </div>
             </div>

@@ -8,8 +8,8 @@ import { arrayify, hexlify } from "@ethersproject/bytes";
 import { utils, bcs } from "@starcoin/starcoin";
 import encoding from '@starcoin/starcoin';
 import { starcoinProvider } from "./app";
-import { executeFunction, executeFunction2 } from "./txs/counter.tx";
-import { GROUP_ADDRESS, INIT_GROUP_FUNC_NAME, S_ADD_MEMBER_FUNC_NAME } from "./txs/config";
+import { executeFunction, executeFunction2, executeRemoveFunction } from "./txs/counter.tx";
+import { GROUP_ADDRESS, INIT_GROUP_FUNC_NAME, S_ADD_MEMBER_FUNC_NAME, S_REMOVE_MEMBER_FUNC_NAME } from "./txs/config";
 
 export const makeModal = (props) => {
   const { children } = props;
@@ -199,3 +199,64 @@ export const AddMember = () => {
     </div>
   );
 };
+
+export const RemoveMember = () => {
+  const { isShow } = useFadeIn();
+  const [memberId, setMemberId] = useState(0);
+  const [txHash, setTxHash] = useState(false);
+  const [txStatus, setTxStatus] = useState(false);
+  const [disabled, setDisabled] = useState(false)
+  const handleCall = async () => {
+    setDisabled(true)
+    setTxStatus("Pending...")
+    const remove_member = async () => {
+      const tyArgs = []
+      console.log("remove this member", memberId);
+      const args = [memberId]
+      let txHash = await executeRemoveFunction(GROUP_ADDRESS, S_REMOVE_MEMBER_FUNC_NAME, tyArgs, args)
+      setTxHash(txHash)
+      let timer = setInterval(async () => {
+        const txnInfo = await starcoinProvider.getTransactionInfo(txHash);
+        setTxStatus(txnInfo.status)
+        if (txnInfo.status === "Executed") {
+          setDisabled(false)
+          clearInterval(timer);
+        }
+      }, 500);
+    }
+    remove_member()
+  }
+
+  return (
+    <div
+      className={classnames(
+        "fixed top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 rounded-2xl shadow-2xl w-3/4 p-6 bg-white duration-300",
+        isShow ? "opacity-100 scale-100" : "opacity-0 scale-50"
+      )}
+    >
+      <div className="font-bold">Remove your group member</div>
+      <div className="mt-2 mb-2">
+        <input
+          type="text"
+          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
+          value={memberId}
+          placeholder="memberId"
+          onChange={(e) => setMemberId(e.target.value)}
+        />
+      </div>
+      <div
+        className="mt-6 p-4 flex justify-center font-bold bg-blue-900 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+        onClick={handleCall}
+        disabled={disabled}
+      >
+        Remove Member id by {memberId}
+      </div>
+      {txHash && (
+        <div className="text-center mt-2 text-gray-500 break-all">
+          Transaction: {txHash}
+        </div>
+      )}
+      {txStatus ? <div style={{ "textAlign": "Center" }}>{txStatus}</div> : null}
+    </div>
+  )
+}
