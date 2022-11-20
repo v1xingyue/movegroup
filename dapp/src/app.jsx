@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import classnames from "classnames";
 import { providers } from "@starcoin/starcoin";
 import StarMaskOnboarding from "@starcoin/starmask-onboarding";
-import { InitGroup, Mask, makeModal, AddMember, RemoveMember } from "./modal";
+import { InitGroup, Mask, makeModal, AddMember, RemoveMember, ModifyMember } from "./modal";
 import "./style.css";
 import { getResource } from "./txs/counter.tx";
 import { GROUP_RESOURCE_ID } from "./txs/config";
@@ -69,16 +69,20 @@ export const App = () => {
     }
   }, [freshConnected]);
 
-  useEffect(async () => {
-    try {
-      starcoinProvider = new providers.Web3Provider(
-        window.starcoin,
-        "any"
-      );
-    } catch {
-      setInstall(false);
-    }
-  }, []);
+  useEffect(() => {
+
+    (async () => {
+      try {
+        starcoinProvider = new providers.Web3Provider(
+          window.starcoin,
+          "any"
+        );
+      } catch {
+        setInstall(false);
+      }
+    })();
+
+  });
 
   const bytesLikeToMsg = (hexmessge) => {
     try {
@@ -139,8 +143,8 @@ export const App = () => {
     let res = await getResource(activeAccount, GROUP_RESOURCE_ID);
     let result = res.members.map((book) => {
       console.log(typeof (book.name));
-      book.name = bytesLikeToMsg(book.name);
-      book.link = bytesLikeToMsg(book.link);
+      book.name = Buffer.from(book.name.slice(2), 'hex').toString('utf8')
+      book.link = Buffer.from(book.link.slice(2), 'hex').toString('utf8')
       return book;
     });
     alert(JSON.stringify(result));
@@ -155,7 +159,7 @@ export const App = () => {
               "bg-fixed bg-no-repeat bg-cover"
             )}
           >
-            Starcoin
+            Movegroup
           </div>
           <div className=" flex justify-center mt-4">
             <div className="duration-300 sm:min-w-3/4 lg:min-w-1/2 border-2 border-slate-50 shadow-xl p-8 rounded-2xl mb-6 flex justify-center flex-col">
@@ -320,6 +324,24 @@ export const App = () => {
                     }}
                   >
                     remove group member
+                  </div>
+
+                  <div
+                    className="mt-4 rounded-2xl bg-blue-900 flex justify-center text-white p-4 font-bold cursor-pointer hover:bg-blue-700 duration-300"
+                    onClick={() => {
+                      makeModal({
+                        children: ({ onClose }) => {
+                          return (
+                            <>
+                              <Mask onClose={onClose} />
+                              <ModifyMember />
+                            </>
+                          );
+                        },
+                      });
+                    }}
+                  >
+                    modify group member
                   </div>
 
                 </div>

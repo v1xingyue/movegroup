@@ -8,8 +8,10 @@ import { arrayify, hexlify } from "@ethersproject/bytes";
 import { utils, bcs } from "@starcoin/starcoin";
 import encoding from '@starcoin/starcoin';
 import { starcoinProvider } from "./app";
-import { executeFunction, executeFunction2, executeRemoveFunction } from "./txs/counter.tx";
-import { GROUP_ADDRESS, INIT_GROUP_FUNC_NAME, S_ADD_MEMBER_FUNC_NAME, S_REMOVE_MEMBER_FUNC_NAME } from "./txs/config";
+import { executeModifyFunction, executeFunction2, executeRemoveFunction } from "./txs/counter.tx";
+import {
+  GROUP_ADDRESS, INIT_GROUP_FUNC_NAME, S_ADD_MEMBER_FUNC_NAME, S_REMOVE_MEMBER_FUNC_NAME, S_REMOVE_MEMBER_MODIFY_NAME
+} from "./txs/config";
 
 export const makeModal = (props) => {
   const { children } = props;
@@ -260,3 +262,84 @@ export const RemoveMember = () => {
     </div>
   )
 }
+
+export const ModifyMember = () => {
+  const [name, setName] = useState("")
+  const [link, setLink] = useState("")
+  const [txHash, setTxHash] = useState()
+  const [disabled, setDisabled] = useState(false)
+  const [txStatus, setTxStatus] = useState()
+  const [memberId, setMemberId] = useState(0);
+  const handleCall = () => {
+    setDisabled(true)
+    setTxStatus("Pending...")
+    const modify_member = async () => {
+      const tyArgs = []
+      console.log(name, link);
+      const args = [memberId, name, link]
+      let txHash = await executeModifyFunction(GROUP_ADDRESS, S_REMOVE_MEMBER_MODIFY_NAME, tyArgs, args)
+      setTxHash(txHash)
+      let timer = setInterval(async () => {
+        const txnInfo = await starcoinProvider.getTransactionInfo(txHash);
+        setTxStatus(txnInfo.status)
+        if (txnInfo.status === "Executed") {
+          setDisabled(false)
+          clearInterval(timer);
+        }
+      }, 500);
+    }
+    modify_member()
+  }
+  const { isShow } = useFadeIn();
+
+  return (
+    <div
+      className={classnames(
+        "fixed top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 rounded-2xl shadow-2xl w-3/4 p-6 bg-white duration-300",
+        isShow ? "opacity-100 scale-100" : "opacity-0 scale-50"
+      )}
+    >
+      <div className="font-bold">Modify Member with id {memberId}</div>
+      <div className="mt-2 mb-2">
+        <input
+          type="text"
+          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
+          value={memberId}
+          placeholder="memberId"
+          onChange={(e) => setMemberId(e.target.value)}
+        />
+      </div>
+      <div className="mt-2 mb-2">
+        <input
+          type="text"
+          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
+          value={name}
+          placeholder="Name"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div className="mt-2 mb-2">
+        <input
+          type="text"
+          className="focus:outline-none rounded-xl border-2 border-slate-700 w-full p-4"
+          placeholder="Link"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+        />
+      </div>
+      <div
+        className="mt-6 p-4 flex justify-center font-bold bg-blue-900 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+        onClick={handleCall}
+        disabled={disabled}
+      >
+        CALL
+      </div>
+      {txHash && (
+        <div className="text-center mt-2 text-gray-500 break-all">
+          Transaction: {txHash}
+        </div>
+      )}
+      {txStatus ? <div style={{ "textAlign": "Center" }}>{txStatus}</div> : null}
+    </div>
+  );
+};
