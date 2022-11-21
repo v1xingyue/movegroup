@@ -11,36 +11,7 @@ export async function getResource(address, resourceID) {
     return resource
 }
 
-export async function executeFunction(address, functionName, strTypeArgs = [], args = []) {
-    const functionId = `${address}::${functionName}`;
-    const tyArgs = utils.tx.encodeStructTypeTags(strTypeArgs);
-    if (args.length > 0) {
-        args[0] = (function () {
-            const se = new bcs.BcsSerializer();
-            se.serializeU64(BigInt(args[0].toString(10)));
-            return hexlify(se.getBytes());
-        })();
-    }
-    args = args.map(arg => arrayify(arg))
-    const scriptFunction = utils.tx.encodeScriptFunction(functionId, tyArgs, args);
-
-    const payloadInHex = (() => {
-        const se = new bcs.BcsSerializer();
-        scriptFunction.serialize(se);
-        return hexlify(se.getBytes());
-    })();
-
-    const txParams = {
-        data: payloadInHex,
-    };
-
-    const transactionHash = await starcoinProvider
-        .getSigner()
-        .sendUncheckedTransaction(txParams);
-    return transactionHash
-}
-
-export async function executeFunction2(address, functionName, strTypeArgs = [], args = []) {
+export async function executeCreateFunction(address, functionName, strTypeArgs = [], args = []) {
     const functionId = `${address}::${functionName}`;
     const tyArgs = utils.tx.encodeStructTypeTags(strTypeArgs);
     const toNameHex = (function () {

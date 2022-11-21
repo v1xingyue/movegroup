@@ -8,7 +8,7 @@ import { arrayify, hexlify } from "@ethersproject/bytes";
 import { utils, bcs } from "@starcoin/starcoin";
 import encoding from '@starcoin/starcoin';
 import { starcoinProvider } from "./app";
-import { executeModifyFunction, executeFunction2, executeRemoveFunction } from "./txs/counter.tx";
+import { executeModifyFunction, executeCreateFunction, executeRemoveFunction } from "./txs/counter.tx";
 import {
   GROUP_ADDRESS, INIT_GROUP_FUNC_NAME, S_ADD_MEMBER_FUNC_NAME, S_REMOVE_MEMBER_FUNC_NAME, S_REMOVE_MEMBER_MODIFY_NAME
 } from "./txs/config";
@@ -144,7 +144,7 @@ export const AddMember = () => {
       const tyArgs = []
       console.log(name, link);
       const args = [name, link]
-      let txHash = await executeFunction2(GROUP_ADDRESS, S_ADD_MEMBER_FUNC_NAME, tyArgs, args)
+      let txHash = await executeCreateFunction(GROUP_ADDRESS, S_ADD_MEMBER_FUNC_NAME, tyArgs, args)
       setTxHash(txHash)
       let timer = setInterval(async () => {
         const txnInfo = await starcoinProvider.getTransactionInfo(txHash);

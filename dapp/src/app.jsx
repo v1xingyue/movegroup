@@ -10,6 +10,10 @@ import { GROUP_RESOURCE_ID } from "./txs/config";
 import { utils, bcs } from "@starcoin/starcoin";
 import { arrayify, hexlify } from "@ethersproject/bytes";
 
+if (window.console) {
+  console.debug = () => { }
+}
+
 export let starcoinProvider;
 
 const currentUrl = new URL(window.location.href);
@@ -84,15 +88,14 @@ export const App = () => {
 
   });
 
-  const bytesLikeToMsg = (hexmessge) => {
-    try {
-      let ubytes = arrayify(hexmessge);
-      let d = new bcs.BcsDeserializer(ubytes);
-      return d.deserializeStr();
-    } catch (error) {
-      return hexmessge;
-    }
-  }
+  const listenMessage = useCallback(() => {
+    window.addEventListener('message', (e) => {
+      if (e.data.data && e.data.data.data && e.data.data.data.method == "starmask_chainChanged") {
+        console.debug("starmask_chainChanged")
+        freshConnected()
+      }
+    })
+  }, [])
 
   const handleClick = useCallback(() => {
     if (isStarMaskConnected) {
@@ -102,6 +105,7 @@ export const App = () => {
     } else {
       freshConnected();
     }
+    listenMessage();
   }, [freshConnected, isStarMaskConnected]);
 
   const handleSendSTC = useCallback(async () => {
